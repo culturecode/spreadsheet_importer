@@ -1,6 +1,5 @@
 # GEMS
 require 'roo'
-require 'conformist'
 require 'charlock_holmes'
 
 # LIB
