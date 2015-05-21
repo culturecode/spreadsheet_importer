@@ -26,29 +26,35 @@ module SpreadsheetImporter
       from_spreadsheet(spreadsheet, options, &block)
     end
 
+    # Returns 2D array of the spreadsheet, rows by columns
+    # If a block is given, yields each row to the block and instead returns
+    # a summary of the import process showing the number of successfully imported rows,
+    # the number of errors, and the total rows in the spreadsheet
     def self.from_spreadsheet(spreadsheet, options = {}, &block)
       options = {:start_row => 1, :schema => nil}.merge(options)
 
       (options[:start_row] - 1).times { spreadsheet.shift } # Remove intro rows
       spreadsheet = options[:schema].conform(spreadsheet) if options[:schema] # If a Conformist schema is provided, use that to prepare rows
 
-      errors = []
-      rowcount = 0
-      spreadsheet.each do |row|
-        rowcount += 1
-        begin
-          block.call(row)
-          print '.'
-        rescue => e
-          progress_indicator = '!'
-          errors << "Row #{rowcount}: #{e.message}"
-          print '!'
+      if block_given?
+        errors = []
+        row_number = options[:start_row]
+        spreadsheet.each_with_index do |row, index|
+          begin
+            block.call(row, index, row_number)
+            print '.'
+          rescue => e
+            errors << "Row #{row_number}: #{e.message}"
+            print '!'
+          end
+          row_number += 1
         end
+        index = row_number - options[:start_row]
+
+        return {:imported => index - errors.count, :errors => errors, :total => index}
+      else
+        return spreadsheet
       end
-
-      rowcount += options[:start_row] if rowcount > 0
-
-      return {:imported => rowcount - errors.count, :errors => errors, :total => rowcount}
     end
   end
 end
