@@ -27,34 +27,63 @@ module SpreadsheetImporter
     end
 
     # Returns 2D array of the spreadsheet, rows by columns
-    # If a block is given, yields each row to the block and instead returns
-    # a summary of the import process showing the number of successfully imported rows,
-    # the number of errors, and the total rows in the spreadsheet
+    # If a block is given, yields each row to the block
+    # Exceptions during the iteration will collected along with their row number
+    # and re-raised at the end of processing
     def self.from_spreadsheet(spreadsheet, options = {}, &block)
       options = {:start_row => 1, :schema => nil}.merge(options)
 
-      (options[:start_row] - 1).times { spreadsheet.shift } # Remove intro rows
-      spreadsheet = options[:schema].conform(spreadsheet) if options[:schema] # If a Conformist schema is provided, use that to prepare rows
+      # Remove intro rows
+      (options[:start_row] - 1).times { spreadsheet.shift }
+
+      headers = spreadsheet.first
+
+      if options[:schema] # If a Conformist schema is provided, use that to prepare rows
+        spreadsheet = options[:schema].conform(spreadsheet, :skip_first => true)
+      else
+        spreadsheet = spreadsheet
+      end
+
+      # Make it possible to add errors to the spreadsheet
+      class << spreadsheet
+        def errors=(array)
+          @errors = array
+        end
+
+        def errors
+          @errors ||= []
+        end
+      end
+
 
       if block_given?
-        errors = []
         row_number = options[:start_row]
         spreadsheet.each_with_index do |row, index|
           begin
-            block.call(row, index, row_number)
+            block.call(row_to_attributes(row, headers), index, row_number)
             print '.'
           rescue => e
-            errors << "Row #{row_number}: #{e.message}"
+            spreadsheet.errors << "Row #{row_number}: #{e.message}\n#{e.backtrace.join("\n")}"
             print '!'
           end
           row_number += 1
         end
-        index = row_number - options[:start_row]
+      end
 
-        return {:imported => index - errors.count, :errors => errors, :total => index}
-      else
-        return spreadsheet
+      return spreadsheet
+    end
+
+    private
+
+    # Returns an attributes hash for the given row
+    def self.row_to_attributes(row, headers)
+      case row
+      when Array
+        Hash[ItemSchema.attribute_names(headers).zip(row)]
+      else # Handle Conformist::HashStruct rows
+        row.attributes
       end
     end
+
   end
 end

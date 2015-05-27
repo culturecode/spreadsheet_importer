@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    spreadsheet_importer (0.0.1)
+    spreadsheet_importer (0.1.0)
       charlock_holmes
       culturecode-roo (~> 2.0.2)
 
