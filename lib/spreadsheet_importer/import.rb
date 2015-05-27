@@ -37,6 +37,9 @@ module SpreadsheetImporter
       (options[:start_row] - 1).times { spreadsheet.shift }
 
       headers = spreadsheet.first
+      if options[:required_columns]
+        assert_required_columns!(headers, options[:required_columns])
+      end
 
       if options[:schema] # If a Conformist schema is provided, use that to prepare rows
         spreadsheet = options[:schema].conform(spreadsheet, :skip_first => true)
@@ -75,6 +78,16 @@ module SpreadsheetImporter
 
     private
 
+    def self.assert_required_columns!(headers, required_columns)
+      required_columns.each do |column_name|
+        raise MissingRequiredColumn, "Spreadsheet must include a '#{column_name}' column" unless header_present?(headers, column_name)
+      end
+    end
+
+    def self.header_present?(headers, column_name)
+      headers.collect{|c| c.downcase.squish}.include?(column_name.downcase.squish)
+    end
+
     # Returns an attributes hash for the given row
     def self.row_to_attributes(row, headers)
       case row
@@ -86,4 +99,8 @@ module SpreadsheetImporter
     end
 
   end
+
+  # EXCEPTIONS
+
+  class MissingRequiredColumn < StandardError; end
 end
