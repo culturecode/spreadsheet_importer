@@ -70,11 +70,11 @@ module SpreadsheetImporter
 
     def self.assert_required_columns!(headers, required_columns)
       required_columns.each do |column_name|
-        raise MissingRequiredColumn, "Spreadsheet must include a '#{column_name}' column" unless header_present?(headers, column_name)
+        raise MissingRequiredColumn, "Spreadsheet must include a '#{column_name}' column" unless column_present?(headers, column_name)
       end
     end
 
-    def self.header_present?(headers, column_name)
+    def self.column_present?(headers, column_name)
       headers.collect{|c| c.downcase.squish}.include?(column_name.downcase.squish)
     end
 
