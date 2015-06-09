@@ -42,36 +42,26 @@ module SpreadsheetImporter
       end
 
       if options[:schema] # If a Conformist schema is provided, use that to prepare rows
-        spreadsheet = options[:schema].conform(spreadsheet, :skip_first => true)
+        rows = options[:schema].conform(spreadsheet, :skip_first => true)
       else
-        spreadsheet = spreadsheet
+        rows = spreadsheet
       end
 
-      # Make it possible to add errors to the spreadsheet
-      class << spreadsheet
-        def errors=(array)
-          @errors = array
-        end
-
-        def errors
-          @errors ||= []
-        end
-      end
-
-
-      if block_given?
+      # Create an enumerator the standardizes the output from conformist or 2D array spreadsheet
+      errors = []
+      spreadsheet = Spreadsheet.new do |yielder|
         row_number = options[:start_row]
-        spreadsheet.each_with_index do |row, index|
+        rows.each_with_index do |row, index|
           begin
-            block.call(row_to_attributes(row, headers), index, row_number)
-            print '.'
+            yielder.yield row_to_attributes(row, headers), index, row_number
           rescue => e
-            spreadsheet.errors << "Row #{row_number}: #{e.message}\n#{e.backtrace.join("\n")}"
-            print '!'
+            errors << "Row #{row_number}: #{e.message}\n#{e.backtrace.join("\n")}"
           end
           row_number += 1
         end
       end
+      spreadsheet.errors = errors
+      spreadsheet.each(&block) if block_given?
 
       return spreadsheet
     end
@@ -98,6 +88,12 @@ module SpreadsheetImporter
       end
     end
 
+  end
+
+  # Spreadsheet
+
+  class Spreadsheet < Enumerator
+    attr_accessor :errors
   end
 
   # EXCEPTIONS
