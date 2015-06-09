@@ -22,7 +22,7 @@ module SpreadsheetImporter
       # Determine whether the column separator is a tab or comma
       col_sep = csv.count("\t") > 0 ? "\t" : ","
 
-      spreadsheet = CSV.parse(csv, :col_sep => col_sep, :headers => true, :header_converters => :downcase)
+      spreadsheet = CSV.parse(csv, :col_sep => col_sep, :headers => true, :header_converters => :downcase).to_a
       from_spreadsheet(spreadsheet, options, &block)
     end
 
