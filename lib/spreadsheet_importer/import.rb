@@ -1,10 +1,13 @@
 module SpreadsheetImporter
   module Import
     def self.from_xlsx(file_path, options = {}, &block)
+      doc = Roo::Excelx.new(file_path, :file_warning => :ignore)
+
       options = {:sheet_name => nil}.merge(options)
+      options[:start_row] -= doc.first_row - 1 if options[:start_row] # Roo starts at the first blank row, so compensate
 
       spreadsheet = []
-      Roo::Excelx.new(file_path, :file_warning => :ignore).each_with_pagename do |name, sheet|
+      doc.each_with_pagename do |name, sheet|
         spreadsheet.concat sheet.to_a unless options[:sheet_name] && name.downcase.strip != options[:sheet_name].downcase.strip
       end
       from_spreadsheet(spreadsheet, options, &block)
