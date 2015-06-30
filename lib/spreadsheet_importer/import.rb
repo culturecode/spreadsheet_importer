@@ -58,7 +58,9 @@ module SpreadsheetImporter
           begin
             yielder.yield row_to_attributes(row, headers), index, row_number
           rescue => e
-            errors << "Row #{row_number}: #{e.message}\n#{e.backtrace.join("\n")}"
+            error = "Row #{row_number}: #{e.message}"
+            error << "\n#{e.backtrace.join("\n")}" if options[:error_backtrace]
+            errors << error
           end
           row_number += 1
         end
