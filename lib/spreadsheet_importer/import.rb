@@ -78,7 +78,7 @@ module SpreadsheetImporter
     end
 
     def self.column_present?(headers, column_name)
-      headers.collect{|c| c.downcase.squish}.include?(column_name.downcase.squish)
+      headers.collect {|c| c.to_s.downcase.squish }.include?(column_name.downcase.squish)
     end
 
     # Returns an attributes hash for the given row
