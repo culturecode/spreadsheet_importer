@@ -87,7 +87,7 @@ module SpreadsheetImporter
     def self.row_to_attributes(row, headers)
       case row
       when Array
-        Hash[ItemSchema.attribute_names(headers).zip(row)]
+        Hash[headers.zip(row)]
       else # Handle Conformist::HashStruct rows
         row.attributes
       end
