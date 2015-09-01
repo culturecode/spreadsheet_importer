@@ -47,6 +47,7 @@ module SpreadsheetImporter
       if options[:schema] # If a Conformist schema is provided, use that to prepare rows
         rows = options[:schema].conform(spreadsheet, :skip_first => true)
       else
+        spreadsheet.shift # Don't iterate over the headers
         rows = spreadsheet
       end
 
@@ -65,6 +66,7 @@ module SpreadsheetImporter
           row_number += 1
         end
       end
+      spreadsheet.headers = headers
       spreadsheet.errors = errors
       spreadsheet.each(&block) if block_given?
 
@@ -98,7 +100,7 @@ module SpreadsheetImporter
   # Spreadsheet
 
   class Spreadsheet < Enumerator
-    attr_accessor :errors
+    attr_accessor :errors, :headers
   end
 
   # EXCEPTIONS
