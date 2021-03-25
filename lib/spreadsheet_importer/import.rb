@@ -19,7 +19,7 @@ module SpreadsheetImporter
       encoding = CharlockHolmes::EncodingDetector.detect(csv)[:encoding]
       csv = CharlockHolmes::Converter.convert csv, encoding, 'UTF-8'
 
-      # Get rid of the UTF-16LE BOM since Charlock doesn't do this for us
+      # Get rid of the UTF-8 BOM since Charlock doesn't do this for us
       csv.slice!(0) if csv[0].ord == 65279
 
       # Determine whether the column separator is a tab or comma
