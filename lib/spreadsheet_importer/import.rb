@@ -10,6 +10,9 @@ module SpreadsheetImporter
       doc.each_with_pagename do |name, sheet|
         spreadsheet.concat sheet.to_a unless options[:sheet_name] && name.downcase.strip != options[:sheet_name].downcase.strip
       end
+
+      raise MissingRequiredSheet, "Spreadsheet must include a Sheet named '#{options[:sheet_name]}'" if options[:sheet_name] && spreadsheet.empty?
+
       from_spreadsheet(spreadsheet, options, &block)
     end
 
@@ -39,7 +42,7 @@ module SpreadsheetImporter
       # Remove intro rows
       (options[:start_row] - 1).times { spreadsheet.shift }
 
-      headers = spreadsheet.first
+      headers = spreadsheet.first || []
       if options[:required_columns]
         assert_required_columns!(headers, options[:required_columns])
       end
@@ -105,5 +108,6 @@ module SpreadsheetImporter
 
   # EXCEPTIONS
 
+  class MissingRequiredSheet < StandardError; end
   class MissingRequiredColumn < StandardError; end
 end
