@@ -8,7 +8,12 @@ module SpreadsheetImporter
 
       spreadsheet = []
       doc.each_with_pagename do |name, sheet|
-        spreadsheet.concat sheet.to_a unless options[:sheet_name] && name.downcase.strip != options[:sheet_name].downcase.strip
+        next if sheet.first_row.nil? # Empty sheets have nothing to contribute, and can't be iterated
+        next if options[:sheet_name] && name.downcase.strip != options[:sheet_name].downcase.strip
+
+        # Start at the sheet's first occupied row to match the historical culturecode-roo
+        # behaviour that the :start_row compensation above depends on
+        spreadsheet.concat sheet.to_a.drop(sheet.first_row - 1)
       end
 
       raise MissingRequiredSheet, "Spreadsheet must include a Sheet named '#{options[:sheet_name]}'" if options[:sheet_name] && spreadsheet.empty?
